@@ -11,6 +11,7 @@ import statistics
 from collections import deque
 import numpy as np
 import requests
+import websockets
 
 # Konfigurasi Logging Terstruktur Telemetry
 logging.basicConfig(
@@ -45,7 +46,7 @@ class AntiSpamStateLocker:
             json.dump({"timestamp": time.time()}, f)
 
 # ==============================================================================
-# MODUL 1: Non-Blocking Asynchronous Ingestion (Deriv API WebSocket Stream)
+# MODUL 1: Non-Blocking Asynchronous Ingestion (Live Deriv WebSocket Stream)
 # ==============================================================================
 class AsyncIngestionModule:
     def __init__(self, endpoint: str, symbol: str):
@@ -55,21 +56,30 @@ class AsyncIngestionModule:
         self.is_running = True
 
     async def connect_and_stream(self):
-        logger.info(f"Connecting to Deriv WebSocket stream for {self.symbol}")
+        logger.info(f"Connecting to live Deriv WebSocket stream for {self.symbol}")
         while self.is_running:
             try:
-                await asyncio.sleep(0.2)
-                simulated_tick = {
-                    "epoch": time.time(),
-                    "symbol": self.symbol,
-                    "bid": 2500.0 + random.uniform(-3.5, 3.5),
-                    "ask": 2500.3 + random.uniform(-3.5, 3.5),
-                    "volume": random.randint(50, 1000)
-                }
-                await self.tick_queue.put(simulated_tick)
+                async with websockets.connect(self.endpoint) as websocket:
+                    subscribe_request = json.dumps({"ticks": self.symbol, "subscribe": 1})
+                    await websocket.send(subscribe_request)
+                    
+                    while self.is_running:
+                        response = await websocket.recv()
+                        data = json.loads(response)
+                        
+                        if "tick" in data:
+                            tick_data = data["tick"]
+                            live_tick = {
+                                "epoch": tick_data.get("epoch", time.time()),
+                                "symbol": tick_data.get("symbol", self.symbol),
+                                "bid": float(tick_data.get("quote", 2500.0)),
+                                "ask": float(tick_data.get("quote", 2500.0)) + 0.3,
+                                "volume": 100
+                            }
+                            await self.tick_queue.put(live_tick)
             except Exception as e:
-                logger.error(f"Ingestion error: {str(e)}")
-                await asyncio.sleep(1)
+                logger.error(f"Deriv WebSocket connection error: {str(e)}. Reconnecting in 3 seconds...")
+                await asyncio.sleep(3)
 
 # ==============================================================================
 # MODUL 2 - 45: AGI Quantitative Core & Profit Maximization Engine
@@ -97,7 +107,7 @@ class AdvancedSignalDispatcher:
         if not self.anti_spam.can_dispatch():
             return False
 
-        # Format teks murni tanpa tanda kurung siku atau simbol khusus pemicu parser
+        # Format teks murni tanpa Markdown / tanda khusus untuk mencegah error HTTP 400
         message = (
             "AGI SINGULARITY PROFIT MATRIX\n\n"
             f"Asset: XAUUSD (Gold)\n"
@@ -184,7 +194,7 @@ class SingularityProfitOrchestrator:
         start_time = time.time()
         while time.time() - start_time < 1500:
             try:
-                tick = await asyncio.wait_for(self.ingestion.tick_queue.get(), timeout=2.0)
+                tick = await asyncio.wait_for(self.ingestion.tick_queue.get(), timeout=5.0)
                 price = tick["bid"]
                 
                 z_score = self.normalizer.normalize(price)
