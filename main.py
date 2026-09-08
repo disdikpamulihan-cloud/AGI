@@ -59,7 +59,6 @@ class AsyncIngestionModule:
         while self.is_running:
             try:
                 await asyncio.sleep(0.2)
-                # Simulasi data harga XAUUSD real-time dengan volatilitas tinggi untuk profit
                 simulated_tick = {
                     "epoch": time.time(),
                     "symbol": self.symbol,
@@ -98,22 +97,23 @@ class AdvancedSignalDispatcher:
         if not self.anti_spam.can_dispatch():
             return False
 
+        # Menggunakan format teks bersih (Plain Text) tanpa Markdown agar terhindar dari Error HTTP 400
         message = (
-            f"🚀 **AGI SINGULARITY PROFIT MATRIX** 🚀\n\n"
-            f"• **Asset:** XAUUSD (Gold)\n"
-            f"• **Action:** {signal_payload['action']}\n"
-            f"• **Entry Price:** {signal_payload['entry']:.2f}\n"
-            f"• **Stop Loss:** {signal_payload['sl']:.2f}\n"
-            f"• **Take Profit Target:** {signal_payload['tp']:.2f}\n"
-            f"• **Probability Score:** {signal_payload['confidence'] * 100:.2f}%\n"
-            f"• **VRF Token:** `{signal_payload['vrf']}`\n\n"
-            f"⚡ *High-Probability Execution Mode Active*"
+            f"[AGI SINGULARITY PROFIT MATRIX]\n\n"
+            f"Asset: XAUUSD (Gold)\n"
+            f"Action: {signal_payload['action']}\n"
+            f"Entry Price: {signal_payload['entry']:.2f}\n"
+            f"Stop Loss: {signal_payload['sl']:.2f}\n"
+            f"Take Profit Target: {signal_payload['tp']:.2f}\n"
+            f"Probability Score: {signal_payload['confidence'] * 100:.2f}%\n"
+            f"VRF Token: {signal_payload['vrf']}\n\n"
+            f"High-Probability Execution Mode Active"
         )
         
         if self.bot_token and self.bot_token != "your_telegram_bot_token_here":
             try:
                 url = f"https://api.telegram.org/bot{self.bot_token}/sendMessage"
-                payload = {"chat_id": self.chat_id, "text": message, "parse_mode": "Markdown"}
+                payload = {"chat_id": self.chat_id, "text": message}
                 response = requests.post(url, json=payload, timeout=5)
                 if response.status_code == 200:
                     logger.info("Profit signal successfully dispatched to Telegram.")
@@ -156,15 +156,11 @@ class DynamicRiskOptimizer:
     def calculate_targets(self, entry: float, direction: str, atr: float = 3.0):
         if direction == "BUY":
             sl = entry - (1.5 * atr)
-            tp = entry + (3.5 * atr) # Profit ratio diperbesar untuk memaksimalkan hasil
+            tp = entry + (3.5 * atr)
         else:
             sl = entry + (1.5 * atr)
             tp = entry - (3.5 * atr)
         return sl, tp
-
-# Placeholder modul pelengkap arsitektur 45 untuk stabilitas tanpa error
-class DummyModule:
-    def execute(self, *args, **kwargs): return True
 
 # ==============================================================================
 # MASTER AGI PROFIT ORCHESTRATOR
@@ -186,7 +182,6 @@ class SingularityProfitOrchestrator:
         asyncio.create_task(self.ingestion.connect_and_stream())
         
         start_time = time.time()
-        # Berjalan selama maksimal 25 menit per eksekusi GitHub Action (aman dari batas limit)
         while time.time() - start_time < 1500:
             try:
                 tick = await asyncio.wait_for(self.ingestion.tick_queue.get(), timeout=2.0)
@@ -199,7 +194,6 @@ class SingularityProfitOrchestrator:
                 features = np.array([z_score, price_delta, float(tick["volume"]) / 1000.0])
                 pred, _ = self.ml_core.partial_fit(features, 1.0 if price_delta > 0 else 0.0)
                 
-                # Filter ketat profit tinggi (Confidence > 75%)
                 confidence = float(1.0 / (1.0 + math.exp(-pred)))
                 
                 if confidence > 0.65 or abs(z_score) > 1.8:
