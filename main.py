@@ -97,9 +97,9 @@ class AdvancedSignalDispatcher:
         if not self.anti_spam.can_dispatch():
             return False
 
-        # Menggunakan format teks bersih (Plain Text) tanpa Markdown agar terhindar dari Error HTTP 400
+        # Format teks murni tanpa tanda kurung siku atau simbol khusus pemicu parser
         message = (
-            f"[AGI SINGULARITY PROFIT MATRIX]\n\n"
+            "AGI SINGULARITY PROFIT MATRIX\n\n"
             f"Asset: XAUUSD (Gold)\n"
             f"Action: {signal_payload['action']}\n"
             f"Entry Price: {signal_payload['entry']:.2f}\n"
@@ -107,7 +107,7 @@ class AdvancedSignalDispatcher:
             f"Take Profit Target: {signal_payload['tp']:.2f}\n"
             f"Probability Score: {signal_payload['confidence'] * 100:.2f}%\n"
             f"VRF Token: {signal_payload['vrf']}\n\n"
-            f"High-Probability Execution Mode Active"
+            "High-Probability Execution Mode Active"
         )
         
         if self.bot_token and self.bot_token != "your_telegram_bot_token_here":
