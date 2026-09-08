@@ -1,18 +1,6 @@
-name: Singularity AGI 24/5 Profit Bot
-
-on:
-  # Tombol manual di tab Actions GitHub
-  workflow_dispatch:
-  
-  # Otomatis berjalan setiap jam, aktif Senin sampai Jumat (Format Cron UTC)
-  # Senin (1) sampai Jumat (5)
-  schedule:
-    - cron: '0 * * * 1-5'
-
 jobs:
   trade-execution:
     runs-on: ubuntu-latest
-    
     steps:
       - name: Checkout AGI Core Repository
         uses: actions/checkout@v4
@@ -24,12 +12,12 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          python -m pip install --upgrade pip
+          pip install --upgrade pip
           pip install -r requirements.txt
 
       - name: Execute AGI Autonomous Profit Loop
+        run: python main.py
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: |
-          python main.py
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}  # <-- TAMBAHKAN BARIS INI
