@@ -1,3 +1,10 @@
+name: Singularity AGI 24/5 Profit Bot
+
+on:
+  push:
+    branches: [ "main" ]
+  workflow_dispatch:
+
 jobs:
   trade-execution:
     runs-on: ubuntu-latest
@@ -12,7 +19,7 @@ jobs:
 
       - name: Install Dependencies
         run: |
-          pip install --upgrade pip
+          python -m pip install --upgrade pip
           pip install -r requirements.txt
 
       - name: Execute AGI Autonomous Profit Loop
@@ -20,4 +27,4 @@ jobs:
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}  # <-- TAMBAHKAN BARIS INI
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
